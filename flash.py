@@ -1,3 +1,8 @@
+'''
+File to control usb drive
+Author OPyshkin
+Version 1.0
+'''
 import subprocess
 import pyudev
 import json
@@ -9,8 +14,10 @@ import OPi.GPIO as GPIO
 # ASSUMED THAT THIS COMMAND HAS ALREADY BEEN RUN
 # sudo mkdir /mnt/usb_stick
 
+#Directory to mount SD
 MOUNT_DIR = "/root/UsbStick"
 
+#Method to execute bash commands
 def run_command(command):
     try:
         ret_code, output = subprocess.getstatusoutput(command)
@@ -20,24 +27,12 @@ def run_command(command):
     except Exception as e:
         print(e)
 
-
+#Get uuid of device 
 def uuid_from_line(line):
     return line[:9]
 
 
-def getInterfaceName():                                                              # Get name of the Ethernet interface
-    try:
-        for dirs in os.walk('/sys/class/net'):
-            print (dir)
-            for dir in dirs:
-                if dir[:3] =='eth' or dir[:4]=='wlan':
-                    interface=dir
-    except:
-        interface="None"
-    return interface
-
-
-def getMAC(interface):                                                               # Return the MAC address of the specified interface                                                    
+def getMAC(interface):                                                                                                       
     try:
         str = open('/sys/class/net/%s/address' %interface).read()
     except:
@@ -47,8 +42,8 @@ def getMAC(interface):                                                          
 
 def start(connectionObject):
     try:                                   
-        GPIO.setwarnings(False)                                                             # Ignore warning for now
-        GPIO.setmode(GPIO.BOARD)                                                            # Use physical pin numbering
+        GPIO.setwarnings(False)                                                             
+        GPIO.setmode(GPIO.BOARD)                                                            
         GPIO.setup(18, GPIO.OUT, initial=GPIO.HIGH)                                         
         GPIO.setup(16, GPIO.OUT, initial=GPIO.LOW)
         macAddrWlan0 = getMAC('wlan0')                  
@@ -56,7 +51,6 @@ def start(connectionObject):
         context = pyudev.Context()
         monitor = pyudev.Monitor.from_netlink(context)
         monitor.filter_by(subsystem='usb')
-
         for device in iter(monitor.poll, None):
             GPIO.output(18, GPIO.HIGH)
             GPIO.output(16, GPIO.LOW)
@@ -86,7 +80,6 @@ def start(connectionObject):
                                 macAddrFile.close()
                             except:
                                 pass
-                            
                             try:
                                 command = "umount %s" %MOUNT_DIR
                                 run_command(command)

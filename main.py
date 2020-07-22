@@ -1,3 +1,9 @@
+'''
+Main file
+Author OPyshkin
+Version 1.0
+'''
+
 import datetime
 from itertools import filterfalse
 import serial
@@ -19,6 +25,7 @@ import flash
 import subprocess
 # autorun at crontab -e
 
+#Method to execute bash commands
 def run_command(command):
     try:
         ret_code, output = subprocess.getstatusoutput(command)
@@ -29,6 +36,7 @@ def run_command(command):
     except Exception as e: 
         print(e)
 
+#Class to send uart data in a queue
 class data_to_send:
     def __init__(self, toSend):
         self.toSend = toSend
@@ -45,10 +53,11 @@ class data_to_send:
             except Exception as e: 
                 print(e)
 
+#Verifying files
 def file_verification(bh_object):
-    
     #for files in os.listdir("/root/new_opi/"):
     try:
+        #File with base colour
         if "baseColour.json" in os.listdir("/root/new_opi/"):
             print ("base clr file exists")
             baseClrFile = open("/root/new_opi/baseColour.json","r")
@@ -85,7 +94,7 @@ def file_verification(bh_object):
         bh_object.baseColorItem[2]= setBaseClr['b'] 
         json.dump(setBaseClr, baseClrFile)
         baseClrFile.close()
-    
+    #File with error colout
     try:
         if "errColour.json" in os.listdir("/root/new_opi/"):
             print ("err clr file exists")
@@ -123,7 +132,7 @@ def file_verification(bh_object):
         bh_object.errorColorItem[2]= setErrClr['b']
         json.dump(setErrClr, errClrFile)
         errClrFile.close()
-    
+    #File with sensors' mode
     try:
         if "sensMode.json" in os.listdir("/root/new_opi/"):
             print ("sens file exists")
@@ -150,6 +159,7 @@ def file_verification(bh_object):
         json.dump(sMode, sensFile)
         sensFile.close()
     
+    #Settings file
     try:
         setFile = open("/root/new_opi/settings.json", "r")
         settings = json.load(setFile)
@@ -163,7 +173,8 @@ def file_verification(bh_object):
         }
         json.dump(settings, setFile)
         setFile.close()
-        
+
+#Listening to UART constantly
 def polling(port):
     while True:
         try:
@@ -172,6 +183,7 @@ def polling(port):
             laserData = [None,None] 
             data = port.read()
             if len(data) != 0:
+                #If current state is not null state process sensors
                 if bh_object.currentState != bh_object.nullState and bh_object.sensorMode ==True:
                     data1[0]=data
                     print (data, "raw0")
@@ -199,8 +211,7 @@ if __name__ == "__main__":
     port_object = serial.Serial('/dev/ttyS1',115200, timeout =1, stopbits=1)
     socket_object = socketio.Client(reconnection = False) 
     file_verification(bh_object)
-    
-    
+    #Connecting to sio server
     @socket_object.on('connect')                                                           
     def on_connect():
         try:
@@ -210,7 +221,7 @@ if __name__ == "__main__":
             dataUart.toSend.append(listToSend)
         except Exception as e: 
             print(e)
-    
+    #Socketio listener
     @socket_object.on('turn')
     def on_message(data):
         try:
@@ -219,11 +230,11 @@ if __name__ == "__main__":
             if data!=None and data not in bh_object.inDataBuffer:
                 bh_object.sensorState[1] = None
                 listToSend = bh_object.sendReceivedData(data, port_object)
-                dataUart.toSend.append(listToSend)
-                
+                dataUart.toSend.append(listToSend)       
         except Exception as e: 
             print(e)
-    
+
+    #Socketio error colour listener
     @socket_object.on('settings:color:set:error')                                                   # Error colour sio listener
     def on_set_err_colour(data):
         print ("received error colour " , data)
@@ -240,7 +251,7 @@ if __name__ == "__main__":
         except Exception as e: 
             print(e)
 
-
+    #Socketio base colour listener
     @socket_object.on('settings:color:set:base')                                                    # Base colour sio listener
     def on_set_base_colour(data):
         try:
@@ -257,7 +268,7 @@ if __name__ == "__main__":
         except Exception as e: 
             print(e)
         
-    
+    #Socketio sensor mode listener
     @socket_object.on('settings:mdm:set')
     def set_sensor_mode(data):
         try:
@@ -270,6 +281,7 @@ if __name__ == "__main__":
         except Exception as e: 
             print(e)
 
+    #Disconnect from sio server event
     @socket_object.on('disconnect')                   # Disconnecting from socket server
     def on_disconnect():
         try:
@@ -278,11 +290,13 @@ if __name__ == "__main__":
         except Exception as e: 
             print(e)
 
-    
-
-    usbTask = Thread(target = flash.start, args=(bh_object,))       #USB drive service
+    #Thread for USB drive
+    usbTask = Thread(target = flash.start, args=(bh_object,))       
+    #Thread for connection control
     connectTask = Thread(target = bh_object.socketConnect, args=(socket_object,port_object,))
+    #Thread for UART listener
     pollTask = Thread(target = polling, args=(port_object,))
+    #Thread for sending data from queue to stm32
     sendTask = Thread(target = dataUart.send_uart, args = (port_object,))
     usbTask.start()
     pollTask.start()
