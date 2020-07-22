@@ -36,19 +36,19 @@ class bagholder_class:
                     if self.sensorState[0] != self.sensorState[1]:
                         print ('wrong sensor', self.currentState)
                         
-                        #UART_port.write(listToSend)
+                        
                         self.sensorState[1] = self.sensorState[0]
-                        #return listToSend
+                        
                 elif (self. sensorState[0] in self.currentState) and (self.currentState[self.sensorState[0]] != [0,0,0] and self.currentState[self.sensorState[0]]!=self.errorColorItem):   #Sensor correct
                     self.currentState = copy.deepcopy(self.nullState)
                     listToSend = [self.currentState[i][j] for i in self.currentState for j in range(0,3)]
                     print ('correct sensor', self.currentState)
                     
-                    #UART_port.write(listToSend)
+                    
                     self.sensorState[1] = self.sensorState[0]
-                    #return listToSend
+                    
                 print (self.sensorState, 'sensor state')
-                #time.sleep(0.010)
+                
                 return listToSend
                 
         except Exception as e: 
@@ -61,7 +61,7 @@ class bagholder_class:
             self.currentState = copy.deepcopy(self.nullState)
             self.currentState[self.inDataBuffer[0]]= self.baseColorItem
             listToSend = [self.currentState[i][j] for i in self.currentState for j in range(0,3)]
-            #print (listToSend)
+            
             del(self.inDataBuffer[0])
             return listToSend
         except Exception as e: 
@@ -72,7 +72,6 @@ class bagholder_class:
             listToSend = [self.nullState[i][j] for i in self.nullState for j in range(0,3)]
             print (listToSend)
             return listToSend
-            #UART_port.write(listToSend)
         except Exception as e: 
             print(e)
 
@@ -88,7 +87,6 @@ class bagholder_class:
 
     def socketConnect(self, socket, UART_port):                    # Checking if socket connection is up
         while True:
-            #print ('socket connect')
             try:
                 time.sleep(1)
                 try:
@@ -115,11 +113,11 @@ class bagholder_class:
                                 time.sleep(1)
                                 macAddrWlan0 = self.getMAC('wlan0')
                                 macAddrEth0 = self.getMAC('eth0')
-                                print("connecting here1")
+                                print ('Connecting to server')
                                 connString = 'http://%s:%s/?q=%s_%s' % (serverSettings['HOST'],serverSettings['PORT'], macAddrWlan0, macAddrEth0)
                                 print (connString)
                                 socket.connect(connString)     # Connect and send query with mac adress
-                                print("connecting here2")
+                                
                             elif self.status == True:
                                 pass
                         except:
@@ -135,14 +133,13 @@ class bagholder_class:
                             if self.ip != serverSettings['HOST'] or self.status==False :   # If disconnected or received new ip
                                 print (serverSettings['HOST'])
                                 socket.disconnect()
-                                #time.sleep(5)
+                                
                                 macAddrWlan0 = self.getMAC('wlan0')
                                 macAddrEth0 = self.getMAC('eth0')
-                                print("connecting here1 with PORT = null")
+                                print("connecting with PORT = null")
                                 connString = 'http://%s:80/?q=%s_%s' % (serverSettings['HOST'], macAddrWlan0, macAddrEth0)
                                 print (connString)
                                 socket.connect(connString)     # Connect and send query with mac adress
-                                print("connecting here2")
                             elif self.status == True:
                                 pass
                         except:
@@ -158,14 +155,12 @@ class bagholder_class:
                         if self.ip != serverSettings['HOST'] or self.status==False :   # If disconnected or received new ip
                             print (serverSettings['HOST'])
                             socket.disconnect()
-                            #time.sleep(5)
                             macAddrWlan0 = self.getMAC('wlan0')
                             macAddrEth0 = self.getMAC('eth0')
-                            print("connecting here1 with no PORT key")
+                            print("connecting with no PORT key")
                             connString = 'http://%s:80/?q=%s_%s' % (serverSettings['HOST'], macAddrWlan0, macAddrEth0)
                             print (connString)
                             socket.connect(connString)     # Connect and send query with mac adress
-                            print("connecting here2")
                         elif self.status == True:
                             pass
                     except:

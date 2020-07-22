@@ -15,15 +15,12 @@ from operator import xor
 import OPi.GPIO as GPIO
 import struct
 from bagholder import bagholder_class
-#from bagholder import server_connection
 import flash
-#import wifi_connect
 import subprocess
-# autorun at sudo nano /etc/profile
+# autorun at crontab -e
 
 def run_command(command):
     try:
-        # start = time.time()
         ret_code, output = subprocess.getstatusoutput(command)
         if ret_code == 1:
             raise Exception("FAILED: %s" % command)
@@ -166,19 +163,6 @@ def file_verification(bh_object):
         }
         json.dump(settings, setFile)
         setFile.close()
-        #settings = json.load(setFile)
-
-    '''
-    if settings["WIFI"]!=None:
-        pass
-        #print("connecting to wifi...")
-        #wifi_connect.connect(settings)
-    else:
-        print("no wifi")
-        pass
-        #wifi_connect.disconnect()
-    '''
-
         
 def polling(port):
     while True:
@@ -186,18 +170,15 @@ def polling(port):
             data1 =[b'\xff',b'\xff']
             slaveData = [None,None]
             laserData = [None,None] 
-            #print ("polling")
             data = port.read()
             if len(data) != 0:
                 if bh_object.currentState != bh_object.nullState and bh_object.sensorMode ==True:
-                    #print ("here")
                     data1[0]=data
                     print (data, "raw0")
                     slaveData = struct.unpack('<B', data1[0])
                     for i in range(0,1):
                         data = port.read()
                         print (data, "raw1")
-                        #print(data , i)
                         if len(data) != 0:
                             
                             data1[1]=data
@@ -206,9 +187,7 @@ def polling(port):
                                 listToSend = bh_object.sensorProcess(slaveData[0], port_object)
                                 dataUart.toSend.append(listToSend)
                                 print (slaveData[0], laserData[0], "triggered laser")
-                                #print ()
                             elif laserData[0] ==1:
-                                #pass
                                 print (slaveData[0], laserData[0], "triggered button")
             time.sleep(0.0001)
         except Exception as e: 
@@ -237,7 +216,6 @@ if __name__ == "__main__":
         try:
             print (data)
             data-=1
-            #print (data['data'])
             if data!=None and data not in bh_object.inDataBuffer:
                 bh_object.sensorState[1] = None
                 listToSend = bh_object.sendReceivedData(data, port_object)
@@ -254,7 +232,6 @@ if __name__ == "__main__":
             bh_object.errorColorItem[0]= data['r']
             bh_object.errorColorItem[1]= data['g']
             bh_object.errorColorItem[2]= data['b']
-            #buffer.newColFlag = True
             json.dump(data, setCol)
             setCol.close()
             listToSend = [bh_object.currentState[i][j] for i in bh_object.currentState for j in range(0,3)]
